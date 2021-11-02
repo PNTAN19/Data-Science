@@ -15,15 +15,24 @@ driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 time.sleep(2)
 html = driver.page_source
 soup = BeautifulSoup(html, "html.parser")
-playlist_title = soup.find("h1", {"class": "soundTitle__title"}).getText()
+playlist_title = soup.find("h1", {"class": "soundTitle__title"}).getText().strip()
 tracks = soup.find_all("div", {"class": "trackItem__content"})
 
+playlist_lst = [];
 track_lst = [];
 
 for track in tracks:
     track_name = track.getText();
     track_lst.append(track_name.strip().replace("\n", " "))
 
-f_out = pd.DataFrame(track_lst, columns=['Track'])
+lst = []
+
+for track_item in track_lst:
+    lst.append(track_item)
+lst = ','.join(lst)
+
+playlist_lst.append([playlist_title, lst])
+
+f_out = pd.DataFrame(playlist_lst, columns=['name', 'Track'])
 f_out.to_csv('playlist.csv', index=False, sep='\t')
 
