@@ -43,9 +43,9 @@ for user_url in set_link:
         try:
             myElem = WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.CLASS_NAME, 'userBadgeListItem__heading')))
             if myElem is not None:
-                break;
+                break
         except TimeoutException:
-            break;
+            break
 
     html = driver.page_source
     soup = BeautifulSoup(html, "html.parser")
@@ -53,3 +53,29 @@ for user_url in set_link:
     for follower in followers:
         if follower not in set_link:
             set_link.append("https://soundcloud.com" + follower.get("href"))
+
+for item in set_user:
+    temp = item[1] + "/tracks"
+    driver.get(temp)
+    while (True):
+        try:
+            myElem = WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.CLASS_NAME, 'profileHeaderInfo__userName')))
+            if myElem is not None:
+                break
+        except TimeoutException:
+            break;
+
+    html = driver.page_source
+    soup = BeautifulSoup(html, "html.parser")
+    emptyTrack = soup.find("h3", {"class": "sc-type-large emptyNetworkPage__headline"})
+    if emptyTrack is None:
+        Track_list = soup.find_all("a", {"class": "sc-link-primary soundTitle__title sc-link-dark sc-text-h4"})
+        string_track = ""
+        for track in Track_list:
+            string_track = string_track + track.getText().strip() + "\t"
+        k = [p.getText(strip=True) for p in soup.find("h2", {"class": "profileHeaderInfo__userName"})]
+        print(k[0] + ':' + '\t' + string_track)
+    else:
+        k = [p.getText(strip=True) for p in soup.find("h2", {"class": "profileHeaderInfo__userName"})]
+        print(k[0] + ':' + '\t' + "None")
