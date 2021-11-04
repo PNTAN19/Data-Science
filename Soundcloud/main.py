@@ -155,11 +155,7 @@ url_lst = [];
 for i in set_user:
     url_lst.append(i[1])
 
-print(url_lst)
-
 playlist = getPlaylists(url_lst)
-for item in playlist:
-    print(item)
 
 f_out = pd.DataFrame(playlist, columns=['User', 'Playlist', 'Track'])
 f_out.to_csv('playlist.csv', index=False, sep='\t')
