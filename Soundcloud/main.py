@@ -108,7 +108,7 @@ for item in link:
         set_link.append(user_url)
 
 for user_url in set_link:
-    if len(set_user) > 20:
+    if len(set_user) > 1:
         break;
     driver.get(user_url)
     while (True):
@@ -125,13 +125,9 @@ for user_url in set_link:
     # Get followers
     follower_url = user_url + "/following"
     driver.get(follower_url)
-    while (True):
-        try:
-            myElem = WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.CLASS_NAME, 'userBadgeListItem__heading')))
-            if myElem is not None:
-                break
-        except TimeoutException:
-            break
+
+    #Wait
+    wait(driver, 'userBadgeListItem__heading')
 
     html = driver.page_source
     soup = BeautifulSoup(html, "html.parser")
@@ -139,7 +135,6 @@ for user_url in set_link:
     for follower in followers:
         if follower not in set_link:
             set_link.append("https://soundcloud.com" + follower.get("href"))
-    break
 
 # for item in set_user:
 #     temp = item[1] + "/tracks"
@@ -172,6 +167,7 @@ for i in set_user:
     url_lst.append(i[1])
 
 playlist = getPlaylists(url_lst)
-
+for url in playlist:
+    print(url)
 #f_out = pd.DataFrame(playlist, columns=['User', 'Playlist', 'Track'])
 #f_out.to_csv('playlist.csv', index=False, sep='\t')
