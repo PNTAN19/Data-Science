@@ -5,7 +5,34 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
-import pandas as pd
+#import pandas as pd
+
+#wait
+def wait(driver, selector_name):
+    while (True):
+        try:
+            myElem = WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.CLASS_NAME, selector_name)))
+            if myElem is not None:
+                break
+        except TimeoutException:
+            break
+#scroll
+def scroll(driver):
+    # Get scroll height
+    last_height = driver.execute_script("return document.body.scrollHeight")
+
+    while True:
+        # Scroll down to bottom
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+        # Wait to load page
+        time.sleep(2)
+
+        # Calculate new scroll height and compare with last scroll height
+        new_height = driver.execute_script("return document.body.scrollHeight")
+        if new_height == last_height:
+            break
+        last_height = new_height
 
 def getTracks(playlist_url):
     driver = webdriver.Chrome()
@@ -42,18 +69,7 @@ def getPlaylistURLs(user_playlist_url):
     # Get scroll height
     last_height = driver.execute_script("return document.body.scrollHeight")
 
-    while True:
-        # Scroll down to bottom
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-
-        # Wait to load page
-        time.sleep(2)
-
-        # Calculate new scroll height and compare with last scroll height
-        new_height = driver.execute_script("return document.body.scrollHeight")
-        if new_height == last_height:
-            break
-        last_height = new_height
+    scroll(driver)
 
     html = driver.page_source
     soup = BeautifulSoup(html, "html.parser")
@@ -161,5 +177,5 @@ playlist = getPlaylists(url_lst)
 for item in playlist:
     print(item)
 
-f_out = pd.DataFrame(playlist, columns=['User', 'Playlist', 'Track'])
-f_out.to_csv('playlist.csv', index=False, sep='\t')
+#f_out = pd.DataFrame(playlist, columns=['User', 'Playlist', 'Track'])
+#f_out.to_csv('playlist.csv', index=False, sep='\t')
