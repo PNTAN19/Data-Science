@@ -218,3 +218,29 @@ def getTracksAPI(set_user):
 # print(getTracks(set_user))
 # print(getTracks(set_user))
 # getTracks(set_user)
+
+def getPlaylist(user_id, client_id, limit=50):
+    playlists = []
+    url = f'https://api-v2.soundcloud.com/users/{user_id}/playlists?client_id={client_id}&limit={limit}'
+    r = requests.get(url)
+
+    while r.status_code != requests.codes.ok or '"incomplete_results":true' in r:
+        time.sleep(1)
+        print('wait')
+        r = requests.get(url)
+
+    y = json.loads(r.text)
+    if len(y['collection']) == 0:
+        playlists.append([user_id, 'None', 'None'])
+    else:
+        for playlist in y['collection']:
+            trackIDs = []
+            for track in playlist['tracks']:
+                trackIDs.append(str(track['id']))
+            allTrackIDs = ','.join(trackIDs)
+            playlists.append([user_id, str(playlist['id']), allTrackIDs])
+
+    return playlists
+
+#example
+#print(getPlaylist('42255333', 'nGKlrpy2IotLQ0QGwBOmIgSFayis6H4e', 50))
