@@ -41,6 +41,76 @@ def scroll(driver):
             break
         last_height = new_height
 
+# Drive the chrome to url link and return soup with html parser
+def drive_to_url_page(driver, url):
+    driver.get(url)
+    #Scroll screen from page to get more data <li> </li>
+    scroll(driver)
+    html = driver.page_source
+    soup = BeautifulSoup(html, "html.parser")
+    return soup
+
+def get_user_name_id_and_url():
+    main_url = "https://soundcloud.com/discover"
+    driver = webdriver.Chrome()
+    soup = drive_to_url_page(driver, main_url)
+    links = soup.find_all("a", {"class": "sc-link-secondary sc-link-light playableTile__usernameHeading audibleTile__usernameHeading sc-truncate sc-text-h4"})
+    set_link = []
+    for item in links:
+        user_url = "https://soundcloud.com" + item.get("href")
+        if user_url not in set_link:
+            set_link.append(user_url)
+
+    #Get the all person in set_link with his/her following information
+    for i in range(0, len(set_link) - 1):
+        following_url = set_link[i] + "/following"
+        soup = drive_to_url_page(driver, following_url)
+        link_following_user = soup.find_all("a", {"class":"userBadgeListItem__heading sc-type-small sc-text-h4 sc-link-dark sc-link-primary sc-truncate"})
+        for item in link_following_user:
+            user_url = "https://soundcloud.com" + item.get("href")
+            if user_url not in set_link:
+                set_link.append(user_url)
+        # print(len(link_following_user))
+        print(len(set_link))
+        if len(set_link) >= 38:
+            break;
+
+    set_data_user = get_all_user_data(driver, set_link)
+    for item in set_data_user:
+        print(item)
+    print(len(set_data_user))
+    return set_data_user
+
+def get_all_user_data(driver, set_link):
+    #Get user id in SoundCloud/Discover by get meta tag in HEAD html
+    set_data_user = []
+    for link_user in set_link:
+        one_data_user = []
+        driver.get(link_user)
+        html = driver.page_source
+        soup = BeautifulSoup(html, "html.parser")
+        #Get user id & user name & user url
+        id_user = soup.find("meta", property="twitter:app:url:googleplay")
+        name_user = soup.find("meta", property="og:title")
+        url_user = soup.find("meta", property="og:url")
+        one_data_user.append(id_user["content"].strip("soundcloud://users:"))
+        one_data_user.append(name_user["content"])
+        one_data_user.append(url_user["content"])
+        # print(id_user["content"].strip("soundcloud://users:") if id_user else "No meta title given")
+        # print(name_user["content"] if name_user else "No meta url given")
+        # print(url_user["content"] if url_user else "No meta url given")
+        set_data_user.append(one_data_user)
+
+    #Print all data user in 2D array
+    # print(set_data_user[0])
+    # print(set_data_user[0][0] + "\t" + set_data_user[0][1] + "\n")
+    # print(set_data_user[10][0] + "\t" + set_data_user[10][1] + "\t" + set_data_user[10][2])
+
+    #Print all data user we have:
+    # for item in set_data_user:
+    #     print(item)
+    # print(len(set_data_user))
+    return set_data_user
 
 def getTracksFromPlaylists(playlist_url):
     driver = webdriver.Chrome()
@@ -244,3 +314,11 @@ def getPlaylist(user_id, client_id, limit=50):
 
 #example
 #print(getPlaylist('42255333', 'nGKlrpy2IotLQ0QGwBOmIgSFayis6H4e', 50))
+
+
+def main():
+    get_user_name_id_and_url()
+
+
+if __name__ == '__main__':
+    main()
