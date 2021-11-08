@@ -305,14 +305,22 @@ def getTracks(set_user):
             string_temp = 'https://soundcloud.com'
             string_temp = string_temp + link['href']
             set_link_tracks.add(string_temp)
-        string_id_tracks = ''
         for link in set_link_tracks:
             driver.get(link)
+            wait(driver, selector_name='sc-ministats-item')
             soup = BeautifulSoup(driver.page_source, "html.parser")
-            string_id_tracks = string_id_tracks + soup.find('meta', {'property': 'twitter:app:url:googleplay'})['content'].split(':')[-1] + ','
+            id_track = soup.find('meta', {'property': 'twitter:app:url:googleplay'})['content'].split(':')[-1]
+            name_track = soup.find('h1', {'class': 'soundTitle__title sc-font g-type-shrinkwrap-inline g-type-shrinkwrap-large-primary theme-dark'}).getText().strip()
+            time_release_track = soup.find('time', {'class': 'relativeTime'})['title']
+            info_track = soup.find_all('span', {'aria-hidden': 'true'})
+            plays = info_track[1].getText()
+            likes = info_track[2].getText()
+            reposts = info_track[3].getText()
 
-        tup = (item[0], string_id_tracks)
-        set_tracks.add(tup)
+            tup = (item[0], id_track, name_track, time_release_track, plays, likes, reposts)
+            print(tup)
+            set_tracks.add(tup)
+
 
     return set_tracks
 
