@@ -112,25 +112,42 @@ def get_all_user_data(driver, set_link):
     # print(len(set_data_user))
     return set_data_user
 
-def getTracksFromPlaylists(playlist_url):
+# Playlist - parse html func start
+def getTracksFromPlaylists(playlist_url, optional):
     driver = webdriver.Chrome()
     driver.get(playlist_url)
-    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    time.sleep(2)
+    scroll(driver)
     html = driver.page_source
     soup = BeautifulSoup(html, "html.parser")
 
     user_name = soup.find("a", {"class": "userBadge__usernameLink"}).getText().strip()
     playlist_title = soup.find("h1", {"class": "soundTitle__title"}).getText().strip()
-    track_items = soup.find_all("div", {"class": "trackItem__content"})
 
-    track_list = [];
-
-    for track_item in track_items:
-        track_name = track_item.getText();
-        track_list.append(track_name.strip().replace("\n", " "))
-
+    track_list = []
     track_str = []
+
+    if optional == 0:
+        track_items = soup.find_all("div", {"class": "trackItem__content"})
+
+        for track_item in track_items:
+            track_name = track_item.getText();
+            track_list.append(track_name.strip().replace("\n", " "))
+    elif optional == 1:
+        track_items = soup.find_all("a", {"class": "trackItem__trackTitle"})
+        track_urls = []
+
+        for track_item in track_items:
+            track_urls.append('https://soundcloud.com' + track_item['href'])
+
+        for url in track_urls:
+            driver = webdriver.Chrome()
+            driver.get(url)
+            html = driver.page_source
+            soup = BeautifulSoup(html, "html.parser")
+
+            meta = soup.find("meta", property="twitter:app:url:iphone")
+            track_list.append(meta["content"].split(':')[-1])
+
     for track_item in track_list:
         track_str.append(track_item)
     track_str = ','.join(track_str)
@@ -144,14 +161,10 @@ def getPlaylistURLs(user_playlist_url):
     url = user_playlist_url
     driver = webdriver.Chrome()
     driver.get(url)
-
-    # Get scroll height
-    last_height = driver.execute_script("return document.body.scrollHeight")
-
     scroll(driver)
-
     html = driver.page_source
     soup = BeautifulSoup(html, "html.parser")
+
     contents = soup.find_all("a", {"class": "sound__coverArt"})
     urls = []
 
@@ -161,16 +174,16 @@ def getPlaylistURLs(user_playlist_url):
     return urls
 
 
-def getPlaylists(user_playlist_urls):
+def getPlaylists(user_playlist_urls, optional):
     playlist_lst = []
 
     for user_url in user_playlist_urls:
         playlist_urls = getPlaylistURLs(user_url + '/sets')
         for playlist_url in playlist_urls:
-            playlist_lst.append(getTracksFromPlaylists(playlist_url))
+            playlist_lst.append(getTracksFromPlaylists(playlist_url, optional))
 
     return playlist_lst
-
+# Playlist - parse html func end
 
 def getTracks(set_user):
     driver = webdriver.Chrome()
