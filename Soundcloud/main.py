@@ -112,6 +112,57 @@ def get_all_user_data(driver, set_link):
     # print(len(set_data_user))
     return set_data_user
 
+#============ using API to get USER.csv =================
+#Get set_user API
+def get_user_by_API(client_id):
+    set_data_user = []
+    #parse html to get <user id > in <HEAD> tag
+    #MAYBE WE CAN FIND A BETTER WAY TO GET <USER_ID>
+    main_url = "https://soundcloud.com/discover"
+    driver = webdriver.Chrome()
+    soup = drive_to_url_page(driver, main_url)
+    links = soup.find_all("a", {
+        "class": "sc-link-secondary sc-link-light playableTile__usernameHeading audibleTile__usernameHeading sc-truncate sc-text-h4"})
+    set_link = []
+    for item in links:
+        user_url = "https://soundcloud.com" + item.get("href")
+        if user_url not in set_link:
+            set_link.append(user_url)
+    set_data_user = get_user_set_all_data(driver, set_link)
+
+    # USE THIS FUNCTION PARSER HTML TO GET MORE PEOPLE'S INFO
+    #get_user_name_and_id()
+    
+    #This df to print out file <user.csv>
+    df = pd.DataFrame(set_data_user,
+                      columns=['User ID','User Name','User Link'])
+    # Select first column of the dataframe as a series
+    set_user_id = df.iloc[:, 0]
+    for item in set_user_id:
+        one_data_user = []
+        user_id = item
+        api_url = f'https://api-v2.soundcloud.com/users/{user_id}?client_id={client_id}'
+        # get request
+        r = requests.get(api_url)
+        print(r)
+        # check whether it get the url
+        # or if it got request, does it have a string "incomplete_results":true in the response it recieved?
+        while r.status_code != requests.codes.ok or '"incomplete_results":true' in r:
+            print("wait")
+            time.sleep(1)
+            r = requests.get(api_url)
+        #JSON processing
+        json_str = json.loads(r.text)
+        one_data_user.append(str(json_str['id']))
+        one_data_user.append(str(json_str['username']))
+        one_data_user.append(str(json_str['permalink_url']))
+        set_data_user.append(one_data_user)
+    #Print to test by eye
+    # for item in set_data_user:
+    #     print(item)
+    return set_data_user
+
+
 # Playlist - parse html func start
 def getTracksFromPlaylists(playlist_url, optional):
     driver = webdriver.Chrome()
@@ -330,7 +381,9 @@ def getPlaylist(user_id, client_id, limit=50):
 
 
 def main():
-    get_user_name_id_and_url()
+    #get_user_name_id_and_url()
+    my_client_id = 'FjnXkiGFvyaVIYtXadMm9pqIDawoxzUW'
+    get_user_by_API(my_client_id)
 
 
 if __name__ == '__main__':
