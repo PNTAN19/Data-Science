@@ -216,6 +216,12 @@ def getTracksFromPlaylists(playlist_url, optional):
 
     user_name = soup.find("a", {"class": "userBadge__usernameLink"}).getText().strip()
     playlist_title = soup.find("h1", {"class": "soundTitle__title"}).getText().strip()
+    num_of_track = soup.find("div", {"class": "genericTrackCount__title"}).getText()
+    create_date = soup.find("time", {"class": "relativeTime"})["title"]
+    datas = soup.find_all("span", {"aria-hidden": "true"})
+
+    likes = datas[1].getText()
+    reports = datas[2].getText()
 
     track_list = []
     track_str = []
@@ -248,7 +254,7 @@ def getTracksFromPlaylists(playlist_url, optional):
     if track_str == '':
         track_str = 'None'
 
-    return user_name, playlist_title, track_str
+    return user_name, playlist_title, num_of_track, create_date, likes, reports, track_str
 
 
 def getPlaylistURLs(user_playlist_url):
