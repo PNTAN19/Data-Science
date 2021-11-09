@@ -132,28 +132,46 @@ def get_all_user_data(driver, set_link):
         driver.get(link_user)
         html = driver.page_source
         soup = BeautifulSoup(html, "html.parser")
-        #Get user id & user name & user url
+
+        #Get USER INFO
         id_user = soup.find("meta", property="twitter:app:url:googleplay")
         name_user = soup.find("meta", property="og:title")
         url_user = soup.find("meta", property="og:url")
+        playlist_count = count_playlist_in_one_person(driver, link_user)
+        # more_info = soup.find("h3", {"class": "profileHeaderInfo__additional g-type-shrinkwrap-block theme-dark g-type-shrinkwrap-large-secondary sc-mt-1x"}).getText().Strip()
+        info_start = soup.find_all("div", {"class":"infoStats__value sc-font-light"})
+        likeTrack_count = soup.find_all("span", {"class":"sidebarHeader__actualTitle sc-text-h3"})
+
+        #Add to one_data_user set
         one_data_user.append(id_user["content"].strip("soundcloud://users:"))
         one_data_user.append(name_user["content"])
         one_data_user.append(url_user["content"])
+        one_data_user.append(playlist_count)
+        # one_data_user.append(more_info)
+        one_data_user.append(info_start[0].getText())   #followers
+        one_data_user.append(info_start[1].getText())   #following
+        one_data_user.append(info_start[2].getText())   #Track count
+        one_data_user.append(likeTrack_count[1].getText().strip(' likes'))
+        #Print to test by eye
         # print(id_user["content"].strip("soundcloud://users:") if id_user else "No meta title given")
         # print(name_user["content"] if name_user else "No meta url given")
         # print(url_user["content"] if url_user else "No meta url given")
+        
         set_data_user.append(one_data_user)
-
-    #Print all data user in 2D array
-    # print(set_data_user[0])
-    # print(set_data_user[0][0] + "\t" + set_data_user[0][1] + "\n")
-    # print(set_data_user[10][0] + "\t" + set_data_user[10][1] + "\t" + set_data_user[10][2])
-
-    #Print all data user we have:
-    # for item in set_data_user:
-    #     print(item)
-    # print(len(set_data_user))
+    write_to_file_csv(set_data_user)
     return set_data_user
+#write set data user to file <'user.csv'>
+def write_to_file_csv(set_data_user):
+    df = pd.DataFrame(set_data_user,
+                      columns=['User ID', 'User Name', 'User Link', 'Playlist Count', 'Followers', 'Following', 'Track Count', 'Like Tracks'])
+    df.to_csv('user.csv')
+
+#Count all playlist in user_url/sets (count by <li> tag)
+def count_playlist_in_one_person(driver, url_of_user):
+    playlist_url = str(url_of_user) + '/sets'
+    soup = drive_to_url_page(driver, playlist_url)
+    playlist_count = soup.find_all("li", {"class":"soundList__item"})
+    return len(playlist_count)
 
 #============ using API to get USER.csv =================
 #Get set_user API
@@ -195,16 +213,41 @@ def get_user_by_API(client_id):
             time.sleep(1)
             r = requests.get(api_url)
         #JSON processing
-        json_str = json.loads(r.text)
-        one_data_user.append(str(json_str['id']))
-        one_data_user.append(str(json_str['username']))
-        one_data_user.append(str(json_str['permalink_url']))
+        user = json.loads(r.text)
+        one_data_user.append(user['id'])
+        one_data_user.append(user['username'])
+        one_data_user.append(user['permalink_url'])
+        one_data_user.append(user['playlist_count'])
+        one_data_user.append(user['track_count'])
+        one_data_user.append(user['city'])
+        one_data_user.append(user['followers_count'])
+        one_data_user.append(user['followings_count'])
+        one_data_user.append(user['likes_count'])
+        one_data_user.append(user['avatar_url'])
+        one_data_user.append(user['created_at'])
+        one_data_user.append(user['kind'])
         set_data_user.append(one_data_user)
     #Print to test by eye
     # for item in set_data_user:
     #     print(item)
+    write_user_data_to_file_csv(set_data_user)
     return set_data_user
 
+def write_user_data_to_file_csv(set_data_user):
+    f_out = pd.DataFrame(set_data_user, columns=['User ID',
+                                                 'User Name',
+                                                 'User URL',
+                                                 'playlist_count',
+                                                 'track_count',
+                                                 'CITY',
+                                                 'followers_count',
+                                                 'followings_count',
+                                                 'likes_count',
+                                                 'avatar_url',
+                                                 'created_at',
+                                                 'kind',
+                                                 ])
+    f_out.to_csv('user_test.csv', index=False, sep='\t')
 
 # Playlist - parse html func start
 def getTracksFromPlaylists(playlist_url, optional):
