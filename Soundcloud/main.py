@@ -324,26 +324,50 @@ def getTracks(set_user):
 
     return set_tracks
 
+def createNoneObj(n):
+    return ['None' for i in range(n)]
 
 def getTracksAPI(set_user):
-    set_tracks = set()
+    tracks = []
     temp1 = 'https://api-v2.soundcloud.com/users/'
     temp2 = '/tracks?client_id=nGKlrpy2IotLQ0QGwBOmIgSFayis6H4e&limit=100'
 
-    for item in set_user:
+    for user_id in set_user:
         string_tracks = ''
-        api = temp1 + item[0] + temp2
+        api = temp1 + user_id + temp2
         while True:
             r = requests.get(api)
             if r.status_code != 200:
                 time.sleep(5.0)
             else:
                 break
-        for temp in r.json()['collection']:
-            string_tracks = string_tracks + str(temp['id']) + ','
-        tup = (item[0], string_tracks)
-        set_tracks.add(tup)
-    return set_tracks
+        y = json.loads(r.text)
+        if len(y['collection']) == 0:
+            tracks.append([user_id] + createNoneObj(24))
+        else:
+            for track in y['collection']:
+                tracks.append([
+                    track['user_id'],
+                    track['artwork_url'],
+                    track['created_at'],
+                    track['duration'],
+                    track['genre'],
+                    track['id'],
+                    track['kind'],
+                    track['last_modified'],
+                    track['license'],
+                    track['likes_count'],
+                    track['permalink'],
+                    track['permalink_url'],
+                    track['public'],
+                    track['reposts_count'],
+                    track['sharing'],
+                    track['tag_list'],
+                    track['title'],
+                    track['uri'],
+                    track['display_date'],
+                ])
+    return tracks
 
 
 # my_url = "https://soundcloud.com/discover"
